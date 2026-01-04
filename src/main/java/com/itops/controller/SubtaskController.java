@@ -1,0 +1,86 @@
+package com.itops.controller;
+
+import com.itops.dto.CreateSubtaskRequest;
+import com.itops.dto.UpdateSubtaskRequest;
+import com.itops.dto.SubtaskResponse;
+import com.itops.security.JwtUtil;
+import com.itops.service.SubtaskService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/tasks")
+@RequiredArgsConstructor
+public class SubtaskController {
+
+    private final SubtaskService subtaskService;
+    private final JwtUtil jwtUtil;
+
+    @GetMapping("/{taskId}/subtasks")
+    public ResponseEntity<List<SubtaskResponse>> getSubtasks(@PathVariable UUID taskId,
+                                                              HttpServletRequest request) {
+        UUID companyId = getCompanyIdFromRequest(request);
+        return ResponseEntity.ok(subtaskService.getSubtasksByTask(taskId, companyId));
+    }
+
+    @PostMapping("/{taskId}/subtasks")
+    public ResponseEntity<SubtaskResponse> createSubtask(@PathVariable UUID taskId,
+                                                          @Valid @RequestBody CreateSubtaskRequest createRequest,
+                                                          HttpServletRequest request) {
+        UUID companyId = getCompanyIdFromRequest(request);
+        UUID userId = getUserIdFromRequest(request);
+        return ResponseEntity.ok(subtaskService.createSubtask(taskId, createRequest, companyId, userId));
+    }
+
+    @GetMapping("/{taskId}/subtasks/{subtaskId}")
+    public ResponseEntity<SubtaskResponse> getSubtaskById(@PathVariable UUID taskId,
+                                                           @PathVariable UUID subtaskId,
+                                                           HttpServletRequest request) {
+        UUID companyId = getCompanyIdFromRequest(request);
+        return ResponseEntity.ok(subtaskService.getSubtaskById(taskId, subtaskId, companyId));
+    }
+
+    @PutMapping("/{taskId}/subtasks/{subtaskId}")
+    public ResponseEntity<SubtaskResponse> updateSubtask(@PathVariable UUID taskId,
+                                                          @PathVariable UUID subtaskId,
+                                                          @RequestBody UpdateSubtaskRequest updateRequest,
+                                                          HttpServletRequest request) {
+        UUID companyId = getCompanyIdFromRequest(request);
+        UUID actorId = getUserIdFromRequest(request);
+        return ResponseEntity.ok(subtaskService.updateSubtask(taskId, subtaskId, updateRequest, companyId, actorId));
+    }
+
+    @PatchMapping("/{taskId}/subtasks/{subtaskId}")
+    public ResponseEntity<SubtaskResponse> patchSubtask(@PathVariable UUID taskId,
+                                                         @PathVariable UUID subtaskId,
+                                                         @RequestBody CreateSubtaskRequest patchRequest,
+                                                         HttpServletRequest request) {
+        UUID companyId = getCompanyIdFromRequest(request);
+        return ResponseEntity.ok(subtaskService.patchSubtask(subtaskId, patchRequest, companyId));
+    }
+
+    @DeleteMapping("/{taskId}/subtasks/{subtaskId}")
+    public ResponseEntity<Void> deleteSubtask(@PathVariable UUID taskId,
+                                               @PathVariable UUID subtaskId,
+                                               HttpServletRequest request) {
+        UUID companyId = getCompanyIdFromRequest(request);
+        subtaskService.deleteSubtask(subtaskId, companyId);
+        return ResponseEntity.noContent().build();
+    }
+
+    private UUID getCompanyIdFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        return jwtUtil.getCompanyIdFromToken(token);
+    }
+
+    private UUID getUserIdFromRequest(HttpServletRequest request) {
+        String token = request.getHeader("Authorization").substring(7);
+        return jwtUtil.getUserIdFromToken(token);
+    }
+}
