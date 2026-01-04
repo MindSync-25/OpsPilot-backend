@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -19,4 +20,12 @@ public class InvoiceItemResponse {
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal amount;
+    
+    // Enhanced fields
+    private String itemType;
+    private InvoiceUserInfo user;
+    private InvoiceTaskInfo task;
+    private BigDecimal rate;
+    private Integer minutes;
+    private List<UUID> sourceTimeEntryIds;
 }

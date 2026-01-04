@@ -17,6 +17,10 @@ public class UpdateInvoiceRequest {
     private LocalDate dueDate;
     private BigDecimal taxRate;
     private String notes;
+    private LocalDate billingPeriodStart;
+    private LocalDate billingPeriodEnd;
+    private String currencyCode;
+    private String paymentTerms;
     
     @Valid
     private List<InvoiceItemRequest> items; // Full replacement

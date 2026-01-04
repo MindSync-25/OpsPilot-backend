@@ -8,7 +8,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -139,6 +141,29 @@ public class InvoiceController {
         
         invoiceService.deleteInvoice(id, companyId);
         return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> generateInvoicePDF(
+        @PathVariable UUID id,
+        HttpServletRequest httpRequest
+    ) {
+        UUID companyId = getCompanyIdFromRequest(httpRequest);
+        String role = getRoleFromRequest(httpRequest);
+        
+        if ("CLIENT".equals(role) || "USER".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        byte[] pdfBytes = invoiceService.generateInvoicePDF(id, companyId);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "invoice-" + id + ".pdf");
+        
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(pdfBytes);
     }
     
     // Helper methods

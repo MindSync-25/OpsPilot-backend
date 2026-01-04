@@ -27,6 +27,14 @@ public class CreateInvoiceRequest {
     
     private String notes;
     
+    private LocalDate billingPeriodStart; // Optional
+    
+    private LocalDate billingPeriodEnd; // Optional
+    
+    private String currencyCode; // Optional, defaults to USD
+    
+    private String paymentTerms; // Optional (e.g., NET_15, NET_30)
+    
     @NotEmpty(message = "At least one invoice item is required")
     @Valid
     private List<InvoiceItemRequest> items;

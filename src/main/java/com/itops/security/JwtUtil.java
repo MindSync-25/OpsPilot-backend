@@ -107,4 +107,13 @@ public class JwtUtil {
             return false;
         }
     }
+    
+    // Wrapper methods for ReportController
+    public UUID extractCompanyId(String token) {
+        return getCompanyIdFromToken(token);
+    }
+    
+    public String extractRole(String token) {
+        return getRoleFromToken(token);
+    }
 }

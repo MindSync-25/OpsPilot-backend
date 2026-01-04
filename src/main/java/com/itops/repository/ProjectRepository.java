@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByCompanyId(UUID companyId);
     List<Project> findByClientIdAndCompanyId(UUID clientId, UUID companyId);
+    List<Project> findByClientIdAndCompanyIdAndDeletedAtIsNull(UUID clientId, UUID companyId);
+    List<Project> findByCompanyIdAndDeletedAtIsNull(UUID companyId);
 }

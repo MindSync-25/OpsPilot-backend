@@ -33,4 +33,17 @@ public class InvoiceResponse {
     private LocalDateTime updatedAt;
     private Boolean isOverdue;
     private List<InvoiceItemResponse> items;
+    
+    // Enhanced fields
+    private InvoiceClientInfo client;
+    private InvoiceProjectInfo project;
+    private InvoiceUserInfo createdBy;
+    private LocalDate billingPeriodStart;
+    private LocalDate billingPeriodEnd;
+    private String currencyCode;
+    private String paymentTerms;
+    private LocalDateTime sentAt;
+    private LocalDateTime paidAt;
+    private LocalDateTime cancelledAt;
+    private InvoiceSummary summary;
 }

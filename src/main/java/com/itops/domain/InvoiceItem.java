@@ -29,4 +29,22 @@ public class InvoiceItem extends BaseEntity {
     
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal amount;
+    
+    @Column(name = "item_type", nullable = false, length = 50)
+    private String itemType = "MANUAL";
+    
+    @Column(name = "user_id")
+    private UUID userId;
+    
+    @Column(name = "task_id")
+    private UUID taskId;
+    
+    @Column(precision = 10, scale = 2)
+    private BigDecimal rate;
+    
+    @Column
+    private Integer minutes;
+    
+    @Column(name = "source_time_entry_ids", columnDefinition = "TEXT")
+    private String sourceTimeEntryIds;
 }

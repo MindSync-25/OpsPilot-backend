@@ -63,4 +63,6 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
         @Param("invoiceId") UUID invoiceId,
         @Param("billedAt") java.time.LocalDateTime billedAt
     );
+    
+    List<TimeEntry> findByCompanyIdAndDeletedAtIsNull(UUID companyId);
 }

@@ -51,4 +51,25 @@ public class Invoice extends BaseEntity {
     
     @Column(name = "created_by")
     private UUID createdBy;
+    
+    @Column(name = "billing_period_start")
+    private LocalDate billingPeriodStart;
+    
+    @Column(name = "billing_period_end")
+    private LocalDate billingPeriodEnd;
+    
+    @Column(name = "currency_code", nullable = false, length = 10)
+    private String currencyCode = "USD";
+    
+    @Column(name = "payment_terms", length = 50)
+    private String paymentTerms;
+    
+    @Column(name = "sent_at")
+    private java.time.LocalDateTime sentAt;
+    
+    @Column(name = "paid_at")
+    private java.time.LocalDateTime paidAt;
+    
+    @Column(name = "cancelled_at")
+    private java.time.LocalDateTime cancelledAt;
 }
