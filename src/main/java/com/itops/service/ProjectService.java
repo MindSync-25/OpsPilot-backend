@@ -43,6 +43,7 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final TimeEntryRepository timeEntryRepository;
     private final NotificationService notificationService;
+    private final SubscriptionGuard subscriptionGuard;
 
     public List<ProjectResponse> getAllProjects(UUID companyId) {
         return projectRepository.findByCompanyId(companyId)
@@ -178,6 +179,9 @@ public class ProjectService {
     }
 
     public ProjectResponse createProject(ProjectRequest request, UUID companyId, UUID actorId) {
+        // Enforce subscription limits
+        subscriptionGuard.enforceProjectCreation(companyId);
+        
         Project project = Project.builder()
                 .name(request.getName())
                 .description(request.getDescription())

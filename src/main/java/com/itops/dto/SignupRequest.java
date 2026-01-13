@@ -21,4 +21,7 @@ public class SignupRequest {
 
     @NotBlank(message = "Company name is required")
     private String companyName;
+
+    // Plan code for trial (defaults to STARTER if not provided)
+    private String planCode = "STARTER";
 }

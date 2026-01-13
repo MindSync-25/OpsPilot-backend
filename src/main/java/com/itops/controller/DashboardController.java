@@ -30,11 +30,12 @@ public class DashboardController {
             @SuppressWarnings("unchecked")
             Map<String, Object> claims = (Map<String, Object>) authentication.getPrincipal();
             UUID userId = UUID.fromString((String) claims.get("userId"));
+            UUID companyId = UUID.fromString((String) claims.get("companyId"));
             String role = (String) claims.get("role");
             
             System.out.println("User ID: " + userId + ", Role: " + role);
             
-            DashboardResponse response = dashboardService.getDashboardStats(userId, role);
+            DashboardResponse response = dashboardService.getDashboardStats(userId, companyId, role);
             System.out.println("Dashboard stats response generated successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {

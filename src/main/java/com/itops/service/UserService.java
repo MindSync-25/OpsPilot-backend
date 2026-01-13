@@ -25,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final TeamRepository teamRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SubscriptionGuard subscriptionGuard;
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers(UUID companyId, UUID currentUserId) {
@@ -147,14 +148,34 @@ public class UserService {
         }
     }
 
-    public List<UserResponse> getUsersForMentions(UUID companyId) {
-        return userRepository.findByCompanyIdAndDeletedAtIsNull(companyId).stream()
+    public List<UserResponse> getUsersForMentions(UUID companyId, UUID currentUserId) {
+        // For mentions, everyone can see all active users in the company
+        System.out.println("=== getUsersForMentions DEBUG ===");
+        System.out.println("Fetching all active users for company: " + companyId);
+        
+        List<User> users = userRepository.findByCompanyIdAndDeletedAtIsNull(companyId);
+        
+        System.out.println("Users for mentions (count: " + users.size() + "):");
+        for (User u : users) {
+            System.out.println("  - " + u.getName() + " (Role: " + u.getRole() + ", Team: " + u.getTeamId() + ", Deleted: " + u.getDeletedAt() + ")");
+        }
+        System.out.println("=== END getUsersForMentions DEBUG ===");
+        
+        return users.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public UserResponse createUser(CreateUserRequest request, UUID companyId, UUID currentUserId) {
+        // Enforce subscription limits
+        subscriptionGuard.enforceUserCreation(companyId);
+        
+        // Check for globally unique email
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
 
@@ -274,11 +295,54 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(UUID userId, UUID companyId) {
+        User user = userRepository.findById(userId)
+                .filter(u -> u.getCompanyId().equals(companyId))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        return mapToResponse(user);
+    }
+
+    @Transactional
+    public UserResponse updateCurrentUserProfile(UUID userId, UUID companyId, com.itops.dto.UpdateUserProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .filter(u -> u.getCompanyId().equals(companyId))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        if (request.getName() != null && !request.getName().isEmpty()) {
+            user.setName(request.getName());
+        }
+        
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            // Check if email is already taken by another user
+            userRepository.findByEmail(request.getEmail())
+                    .ifPresent(existingUser -> {
+                        if (!existingUser.getId().equals(userId)) {
+                            throw new IllegalArgumentException("Email already exists");
+                        }
+                    });
+            user.setEmail(request.getEmail());
+        }
+        
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        
+        if (request.getDesignation() != null) {
+            user.setDesignation(request.getDesignation());
+        }
+        
+        User updated = userRepository.save(user);
+        return mapToResponse(updated);
+    }
+
     private UserResponse mapToResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .phone(user.getPhone())
                 .role(user.getRole().name())
                 .teamId(user.getTeamId())
                 .designation(user.getDesignation())

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
+    List<Attachment> findByEntityTypeAndEntityId(String entityType, UUID entityId);
     List<Attachment> findByEntityTypeAndEntityIdAndCompanyId(String entityType, UUID entityId, UUID companyId);
     List<Attachment> findByCompanyId(UUID companyId);
     void deleteByEntityTypeAndEntityIdAndCompanyId(String entityType, UUID entityId, UUID companyId);

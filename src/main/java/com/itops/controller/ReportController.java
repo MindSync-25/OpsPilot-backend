@@ -48,11 +48,12 @@ public class ReportController {
         UUID companyId = getCompanyIdFromRequest(request);
         String role = getRoleFromRequest(request);
         
-        if ("CLIENT".equals(role) || "USER".equals(role)) {
+        // Only TOP_USER, SUPER_USER, and ADMIN can access revenue reports
+        if ("CLIENT".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
-        log.info("Getting revenue report for company: {}", companyId);
+        log.info("Getting revenue report for company: {} (role: {})", companyId, role);
         RevenueReportDTO report = reportService.getRevenueReport(companyId, filter);
         return ResponseEntity.ok(report);
     }
@@ -64,11 +65,12 @@ public class ReportController {
         UUID companyId = getCompanyIdFromRequest(request);
         String role = getRoleFromRequest(request);
         
-        if ("CLIENT".equals(role) || "USER".equals(role)) {
+        // Only TOP_USER, SUPER_USER, and ADMIN can access project reports
+        if ("CLIENT".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
-        log.info("Getting project report for company: {}", companyId);
+        log.info("Getting project report for company: {} (role: {})", companyId, role);
         ProjectReportDTO report = reportService.getProjectReport(companyId, filter);
         return ResponseEntity.ok(report);
     }
@@ -91,11 +93,12 @@ public class ReportController {
         UUID companyId = getCompanyIdFromRequest(request);
         String role = getRoleFromRequest(request);
         
-        if ("CLIENT".equals(role) || "USER".equals(role)) {
+        // Only TOP_USER, SUPER_USER, and ADMIN can access team reports
+        if ("CLIENT".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
-        log.info("Getting team report for company: {}", companyId);
+        log.info("Getting team report for company: {} (role: {})", companyId, role);
         TeamReportDTO report = reportService.getTeamReport(companyId, filter);
         return ResponseEntity.ok(report);
     }
@@ -107,7 +110,8 @@ public class ReportController {
         UUID companyId = getCompanyIdFromRequest(request);
         String role = getRoleFromRequest(request);
         
-        if ("CLIENT".equals(role) || "USER".equals(role)) {
+        // Only TOP_USER, SUPER_USER, and ADMIN can download revenue PDF
+        if ("CLIENT".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -133,7 +137,8 @@ public class ReportController {
         UUID companyId = getCompanyIdFromRequest(request);
         String role = getRoleFromRequest(request);
         
-        if ("CLIENT".equals(role) || "USER".equals(role)) {
+        // Only TOP_USER, SUPER_USER, and ADMIN can download project PDF
+        if ("CLIENT".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         
@@ -180,7 +185,8 @@ public class ReportController {
         UUID companyId = getCompanyIdFromRequest(request);
         String role = getRoleFromRequest(request);
         
-        if ("CLIENT".equals(role) || "USER".equals(role)) {
+        // Only TOP_USER, SUPER_USER, and ADMIN can download team PDF
+        if ("CLIENT".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         

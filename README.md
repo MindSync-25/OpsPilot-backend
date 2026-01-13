@@ -1,6 +1,6 @@
-# ITOps SaaS Backend
+# OpsPilot Backend
 
-Production-grade Spring Boot backend for IT Operations SaaS platform.
+Production-grade Spring Boot backend for OpsPilot IT Operations Management platform.
 
 ## Tech Stack
 

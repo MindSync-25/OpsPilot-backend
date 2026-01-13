@@ -14,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -116,7 +118,14 @@ public class CrmService {
         if (request.getNotes() != null) crm.setNotes(request.getNotes());
         if (request.getOwnerId() != null) crm.setOwnerId(request.getOwnerId());
         if (request.getNextFollowUp() != null && !request.getNextFollowUp().trim().isEmpty()) {
-            crm.setNextFollowUp(LocalDateTime.parse(request.getNextFollowUp()));
+            try {
+                // Try parsing as full LocalDateTime first (e.g., "2026-01-08T10:30:00")
+                crm.setNextFollowUp(LocalDateTime.parse(request.getNextFollowUp()));
+            } catch (Exception e) {
+                // If that fails, parse as LocalDate and convert to LocalDateTime at start of day
+                LocalDate date = LocalDate.parse(request.getNextFollowUp());
+                crm.setNextFollowUp(date.atStartOfDay());
+            }
         }
         crm.setUpdatedAt(LocalDateTime.now());
         clientCrmRepository.save(crm);
@@ -208,7 +217,14 @@ public class CrmService {
         if (request.getNotes() != null) crm.setNotes(request.getNotes());
         if (request.getOwnerId() != null) crm.setOwnerId(request.getOwnerId());
         if (request.getNextFollowUp() != null && !request.getNextFollowUp().trim().isEmpty()) {
-            crm.setNextFollowUp(LocalDateTime.parse(request.getNextFollowUp()));
+            try {
+                // Try parsing as full LocalDateTime first (e.g., "2026-01-08T10:30:00")
+                crm.setNextFollowUp(LocalDateTime.parse(request.getNextFollowUp()));
+            } catch (Exception e) {
+                // If that fails, parse as LocalDate and convert to LocalDateTime at start of day
+                LocalDate date = LocalDate.parse(request.getNextFollowUp());
+                crm.setNextFollowUp(date.atStartOfDay());
+            }
         }
         crm.setUpdatedAt(LocalDateTime.now());
         clientCrmRepository.save(crm);

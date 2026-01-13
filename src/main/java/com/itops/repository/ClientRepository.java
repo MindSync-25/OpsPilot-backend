@@ -13,6 +13,9 @@ import java.util.UUID;
 @Repository
 public interface ClientRepository extends JpaRepository<Client, UUID> {
 
+    // Find all clients by company (including soft deleted)
+    List<Client> findByCompanyId(UUID companyId);
+
     // Find all clients by company (excluding soft deleted)
     List<Client> findAllByCompanyIdAndDeletedAtIsNull(UUID companyId);
 

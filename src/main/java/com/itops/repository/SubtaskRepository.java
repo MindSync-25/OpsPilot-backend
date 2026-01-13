@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface SubtaskRepository extends JpaRepository<Subtask, UUID> {
+    List<Subtask> findByTaskId(UUID taskId);
     
     List<Subtask> findByCompanyIdAndTaskIdAndDeletedAtIsNullOrderBySortOrder(UUID companyId, UUID taskId);
     

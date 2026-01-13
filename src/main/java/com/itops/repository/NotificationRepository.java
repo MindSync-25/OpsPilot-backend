@@ -13,6 +13,9 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
     
+    // Find all notifications for a company
+    List<Notification> findByCompanyId(UUID companyId);
+    
     // Find all notifications for a user (most recent first)
     List<Notification> findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID userId);
     

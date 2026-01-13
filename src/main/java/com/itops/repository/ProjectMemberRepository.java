@@ -13,6 +13,8 @@ import java.util.UUID;
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UUID> {
 
+    List<ProjectMember> findByCompanyId(UUID companyId);
+
     @Query("SELECT pm FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.companyId = :companyId AND pm.deletedAt IS NULL")
     List<ProjectMember> findByProjectIdAndCompanyId(@Param("projectId") UUID projectId, @Param("companyId") UUID companyId);
 

@@ -1,0 +1,11 @@
+-- Add phone column to users table if not exists
+-- This column was added in V1 but this migration ensures it exists
+-- No action needed as phone column already exists from V1
+
+-- DO $$
+-- BEGIN
+--     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+--                    WHERE table_name = 'users' AND column_name = 'phone') THEN
+--         ALTER TABLE users ADD COLUMN phone VARCHAR(50);
+--     END IF;
+-- END $$;

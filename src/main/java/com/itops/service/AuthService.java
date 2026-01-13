@@ -26,6 +26,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final SubscriptionService subscriptionService;
 
     public LoginResponse login(LoginRequest request) {
         // Find user by email
@@ -64,9 +65,9 @@ public class AuthService {
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
-        // Check if email already exists
+        // Check if email already exists globally
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            throw new IllegalArgumentException("Email already exists");
         }
 
         // Create new company
@@ -76,15 +77,19 @@ public class AuthService {
                 .build();
         company = companyRepository.save(company);
 
+        // Create trial subscription for the new company on selected plan
+        String planCode = request.getPlanCode() != null ? request.getPlanCode() : "STARTER";
+        subscriptionService.createOrUpdateTrial(company.getId(), planCode);
+
         // Hash password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-        // Create new user with ADMIN role
+        // Create new user with TOP_USER role (company owner)
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(hashedPassword)
-                .role(User.UserRole.ADMIN)
+                .role(User.UserRole.TOP_USER)
                 .isActive(true)
                 .build();
         user.setCompanyId(company.getId());

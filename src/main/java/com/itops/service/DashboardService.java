@@ -25,7 +25,7 @@ public class DashboardService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final OrgScopeService orgScopeService;
     
-    public DashboardResponse getDashboardStats(UUID userId, String role) {
+    public DashboardResponse getDashboardStats(UUID userId, UUID companyId, String role) {
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDate today = LocalDate.now();
@@ -38,8 +38,8 @@ public class DashboardService {
             // Determine if user should see all data or only their own
             boolean isRestrictedUser = "USER".equals(role) || "ADMIN".equals(role);
             
-            // Project stats - filter based on role
-            List<Project> allProjects = projectRepository.findAll();
+            // Project stats - filter by company first, then by role
+            List<Project> allProjects = projectRepository.findByCompanyId(companyId);
             if (allProjects == null) {
                 allProjects = new ArrayList<>();
             }
@@ -73,8 +73,8 @@ public class DashboardService {
                         Collectors.counting()
                 ));
         
-        // Task stats - filter based on role
-        List<Task> allTasks = taskRepository.findAll();
+        // Task stats - filter by company first, then by role
+        List<Task> allTasks = taskRepository.findByCompanyId(companyId);
         
         // For restricted users, only show tasks assigned to them
         if (isRestrictedUser) {
@@ -90,8 +90,8 @@ public class DashboardService {
                         Collectors.counting()
                 ));
         
-        // Time tracking stats - filter based on role
-        List<TimeEntry> allTimeEntries = timeEntryRepository.findAll();
+        // Time tracking stats - filter by company first, then by role
+        List<TimeEntry> allTimeEntries = timeEntryRepository.findByCompanyId(companyId);
         
         // For restricted users, only show their own time entries
         if (isRestrictedUser) {
@@ -142,14 +142,12 @@ public class DashboardService {
         
         if (isRestrictedUser) {
             // ADMIN and USER see their own pending requests (submitted timesheets + pending leave requests)
-            long myPendingTimesheets = timesheetRepository.findAll().stream()
-                    .filter(ts -> ts.getDeletedAt() == null)
+            long myPendingTimesheets = timesheetRepository.findByCompanyIdAndDeletedAtIsNull(companyId).stream()
                     .filter(ts -> "SUBMITTED".equals(ts.getStatus()))
                     .filter(ts -> userId.equals(ts.getUserId()))
                     .count();
             
-            long myPendingLeaveRequests = leaveRequestRepository.findAll().stream()
-                    .filter(lr -> lr.getDeletedAt() == null)
+            long myPendingLeaveRequests = leaveRequestRepository.findByCompanyIdAndDeletedAtIsNull(companyId).stream()
                     .filter(lr -> "PENDING".equals(lr.getStatus()))
                     .filter(lr -> userId.equals(lr.getUserId()))
                     .count();
@@ -158,22 +156,19 @@ public class DashboardService {
         } else {
             // Get user IDs that this user can approve based on their role
             // Use orgScopeService to match actual approval permissions
-            final Set<UUID> subordinateUserIds = orgScopeService.getAllowedUserIds(userId, role, 
-                    userRepository.findById(userId).map(User::getCompanyId).orElse(null));
+            final Set<UUID> subordinateUserIds = orgScopeService.getAllowedUserIds(userId, role, companyId);
             
             // Remove self from the set to avoid counting own requests
             subordinateUserIds.remove(userId);
             
             // Count pending timesheets from subordinates
-            List<Timesheet> pendingTimesheets = timesheetRepository.findAll().stream()
-                    .filter(ts -> ts.getDeletedAt() == null)
+            List<Timesheet> pendingTimesheets = timesheetRepository.findByCompanyIdAndDeletedAtIsNull(companyId).stream()
                     .filter(ts -> "SUBMITTED".equals(ts.getStatus()))
                     .filter(ts -> subordinateUserIds.contains(ts.getUserId()))
                     .collect(Collectors.toList());
             
             // Count pending leave requests from subordinates
-            List<LeaveRequest> pendingLeaveRequests = leaveRequestRepository.findAll().stream()
-                    .filter(lr -> lr.getDeletedAt() == null)
+            List<LeaveRequest> pendingLeaveRequests = leaveRequestRepository.findByCompanyIdAndDeletedAtIsNull(companyId).stream()
                     .filter(lr -> "PENDING".equals(lr.getStatus()))
                     .filter(lr -> subordinateUserIds.contains(lr.getUserId()))
                     .collect(Collectors.toList());
@@ -181,8 +176,8 @@ public class DashboardService {
             pendingApprovalsCount = pendingTimesheets.size() + pendingLeaveRequests.size();
         }
         
-        // User stats
-        List<User> allUsers = userRepository.findAll();
+        // User stats - filter by company
+        List<User> allUsers = userRepository.findByCompanyId(companyId);
         int totalTeamMembers = (int) allUsers.stream()
                 .filter(u -> u.getDeletedAt() == null)
                 .count();
@@ -193,14 +188,14 @@ public class DashboardService {
                 .collect(Collectors.toSet());
         int activeTeamMembers = isRestrictedUser ? (activeUserIds.contains(userId) ? 1 : 0) : activeUserIds.size();
         
-        // Recent activities - filtered by role
-        List<DashboardResponse.ActivityItem> recentActivities = getRecentActivities(userId, isRestrictedUser);
+        // Recent activities - filtered by company and role
+        List<DashboardResponse.ActivityItem> recentActivities = getRecentActivities(userId, companyId, isRestrictedUser);
         
-        // Upcoming deadlines - filtered by role
-        List<DashboardResponse.DeadlineItem> upcomingDeadlines = getUpcomingDeadlines(userId, isRestrictedUser);
+        // Upcoming deadlines - filtered by company and role
+        List<DashboardResponse.DeadlineItem> upcomingDeadlines = getUpcomingDeadlines(userId, companyId, isRestrictedUser);
         
-        // Top projects by hours - filtered by role
-        List<DashboardResponse.ProjectHoursItem> topProjectsByHours = getTopProjectsByHours(userId, isRestrictedUser);
+        // Top projects by hours - filtered by company and role
+        List<DashboardResponse.ProjectHoursItem> topProjectsByHours = getTopProjectsByHours(userId, companyId, isRestrictedUser);
         
         return DashboardResponse.builder()
                 .activeProjects(activeProjects.size())
@@ -254,12 +249,12 @@ public class DashboardService {
         }
     }
     
-    private List<DashboardResponse.ActivityItem> getRecentActivities(UUID userId, boolean isRestrictedUser) {
+    private List<DashboardResponse.ActivityItem> getRecentActivities(UUID userId, UUID companyId, boolean isRestrictedUser) {
         try {
             List<DashboardResponse.ActivityItem> activities = new ArrayList<>();
             
-            // Get recent projects - filtered by role
-            List<Project> recentProjects = projectRepository.findAll().stream()
+            // Get recent projects - filtered by company and role
+            List<Project> recentProjects = projectRepository.findByCompanyId(companyId).stream()
                     .filter(p -> p.getDeletedAt() == null)
                     .filter(p -> p.getCreatedAt() != null)
                     .filter(p -> {
@@ -291,8 +286,8 @@ public class DashboardService {
                     .build());
         }
         
-        // Get recent tasks - filtered by role
-        List<Task> recentTasks = taskRepository.findAll().stream()
+        // Get recent tasks - filtered by company and role
+        List<Task> recentTasks = taskRepository.findByCompanyId(companyId).stream()
                 .filter(t -> t.getDeletedAt() == null)
                 .filter(t -> t.getCreatedAt() != null)
                 .filter(t -> {
@@ -322,9 +317,8 @@ public class DashboardService {
                     .build());
         }
         
-        // Get recent timesheets - filtered by role
-        List<Timesheet> recentTimesheets = timesheetRepository.findAll().stream()
-                .filter(ts -> ts.getDeletedAt() == null)
+        // Get recent timesheets - filtered by company and role
+        List<Timesheet> recentTimesheets = timesheetRepository.findByCompanyIdAndDeletedAtIsNull(companyId).stream()
                 .filter(ts -> ts.getCreatedAt() != null)
                 .filter(ts -> {
                     if (!isRestrictedUser) return true;
@@ -369,13 +363,13 @@ public class DashboardService {
         }
     }
     
-    private List<DashboardResponse.DeadlineItem> getUpcomingDeadlines(UUID userId, boolean isRestrictedUser) {
+    private List<DashboardResponse.DeadlineItem> getUpcomingDeadlines(UUID userId, UUID companyId, boolean isRestrictedUser) {
         try {
             List<DashboardResponse.DeadlineItem> deadlines = new ArrayList<>();
             LocalDate today = LocalDate.now();
         
-        // Get projects with end dates - filtered by role
-        List<Project> projectsWithDeadlines = projectRepository.findAll().stream()
+        // Get projects with end dates - filtered by company and role
+        List<Project> projectsWithDeadlines = projectRepository.findByCompanyId(companyId).stream()
                 .filter(p -> p.getDeletedAt() == null)
                 .filter(p -> p.getEndDate() != null)
                 .filter(p -> !p.getEndDate().isBefore(today))
@@ -402,8 +396,8 @@ public class DashboardService {
                     .build());
         }
         
-        // Get tasks with due dates - filtered by role
-        List<Task> tasksWithDeadlines = taskRepository.findAll().stream()
+        // Get tasks with due dates - filtered by company and role
+        List<Task> tasksWithDeadlines = taskRepository.findByCompanyId(companyId).stream()
                 .filter(t -> t.getDeletedAt() == null)
                 .filter(t -> t.getDueDate() != null)
                 .filter(t -> !t.getDueDate().isBefore(today))
@@ -439,9 +433,9 @@ public class DashboardService {
         }
     }
     
-    private List<DashboardResponse.ProjectHoursItem> getTopProjectsByHours(UUID userId, boolean isRestrictedUser) {
+    private List<DashboardResponse.ProjectHoursItem> getTopProjectsByHours(UUID userId, UUID companyId, boolean isRestrictedUser) {
         try {
-            List<Project> projects = projectRepository.findAll().stream()
+            List<Project> projects = projectRepository.findByCompanyId(companyId).stream()
                     .filter(p -> p.getDeletedAt() == null)
                     .filter(p -> {
                         if (!isRestrictedUser) return true;

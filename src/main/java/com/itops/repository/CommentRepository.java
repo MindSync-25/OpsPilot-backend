@@ -20,4 +20,7 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
             Comment.EntityType entityType, 
             UUID entityId
     );
+    
+    // Methods for deletion by entity
+    List<Comment> findByEntityTypeAndEntityId(Comment.EntityType entityType, UUID entityId);
 }

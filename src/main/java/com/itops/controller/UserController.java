@@ -38,7 +38,8 @@ public class UserController {
     @GetMapping("/mentions")
     public ResponseEntity<List<UserResponse>> getUsersForMentions(HttpServletRequest request) {
         UUID companyId = getCompanyIdFromRequest(request);
-        return ResponseEntity.ok(userService.getUsersForMentions(companyId));
+        UUID userId = getUserIdFromRequest(request);
+        return ResponseEntity.ok(userService.getUsersForMentions(companyId, userId));
     }
 
     @PostMapping
@@ -66,6 +67,22 @@ public class UserController {
         UUID companyId = getCompanyIdFromRequest(request);
         userService.deleteUser(id, companyId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(HttpServletRequest request) {
+        UUID userId = getUserIdFromRequest(request);
+        UUID companyId = getCompanyIdFromRequest(request);
+        return ResponseEntity.ok(userService.getCurrentUser(userId, companyId));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateCurrentUserProfile(
+            @Valid @RequestBody com.itops.dto.UpdateUserProfileRequest updateRequest,
+            HttpServletRequest request) {
+        UUID userId = getUserIdFromRequest(request);
+        UUID companyId = getCompanyIdFromRequest(request);
+        return ResponseEntity.ok(userService.updateCurrentUserProfile(userId, companyId, updateRequest));
     }
 
     private UUID getCompanyIdFromRequest(HttpServletRequest request) {
